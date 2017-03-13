@@ -26,6 +26,7 @@ import android.support.v4.view.ViewPager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewTreeObserver;
@@ -150,7 +151,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     debugTextView = (TextView) findViewById(R.id.debug_text_view);
     retryButton = (Button) findViewById(R.id.retry_button);
     retryButton.setOnClickListener(this);
-
+    simpleExoPlayerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
+    simpleExoPlayerView.setControllerVisibilityListener(PlayerActivity.this);
+    simpleExoPlayerView.requestFocus();
     toSetupBanner();
   }
 
@@ -173,11 +176,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
       @Override
       public void onPageSelected(int position) {
         Log.d("dogtim", "onPageSelected: " + position);
-        releasePlayer();
-        simpleExoPlayerView = (SimpleExoPlayerView) bannerPager.findViewWithTag(position);
-        simpleExoPlayerView.setControllerVisibilityListener(PlayerActivity.this);
-        simpleExoPlayerView.requestFocus();
-        initializePlayer();
+        View view = (View) bannerPager.findViewWithTag(position);
+        simpleExoPlayerView.setSurfaceView((SurfaceView) view.findViewById(R.id.surface_view));
+
       }
 
       @Override
@@ -223,7 +224,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public void onStart() {
     super.onStart();
     if (Util.SDK_INT > 23) {
-      //initializePlayer();
+      initializePlayer();
     }
   }
 
@@ -231,7 +232,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public void onResume() {
     super.onResume();
     if ((Util.SDK_INT <= 23 || player == null)) {
-      //initializePlayer();
+      initializePlayer();
     }
   }
 

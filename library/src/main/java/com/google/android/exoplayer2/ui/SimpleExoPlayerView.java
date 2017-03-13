@@ -651,6 +651,10 @@ public final class SimpleExoPlayerView extends FrameLayout {
     aspectRatioFrame.setResizeMode(resizeMode);
   }
 
+  public void setSurfaceView(SurfaceView surfaceView) {
+    player.setVideoSurfaceView(surfaceView);
+  }
+
   private final class ComponentListener implements SimpleExoPlayer.VideoListener,
       TextRenderer.Output, ExoPlayer.EventListener {
 
