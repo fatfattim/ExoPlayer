@@ -19,16 +19,21 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.view.ViewPager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -36,6 +41,10 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.demo.banner.BannerAdapter;
+import com.google.android.exoplayer2.demo.banner.Decorator;
+import com.google.android.exoplayer2.demo.banner.InfiniteViewPager;
+import com.google.android.exoplayer2.demo.banner.Utility;
 import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
 import com.google.android.exoplayer2.drm.DrmSessionManager;
 import com.google.android.exoplayer2.drm.FrameworkMediaCrypto;
@@ -67,9 +76,11 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
+
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -123,6 +134,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Log.d("dogtim", "onCreate: ");
     shouldAutoPlay = true;
     clearResumePosition();
     mediaDataSourceFactory = buildDataSourceFactory(true);
@@ -139,9 +151,64 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     retryButton = (Button) findViewById(R.id.retry_button);
     retryButton.setOnClickListener(this);
 
-    simpleExoPlayerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
-    simpleExoPlayerView.setControllerVisibilityListener(this);
-    simpleExoPlayerView.requestFocus();
+    toSetupBanner();
+  }
+
+  private InfiniteViewPager bannerPager;
+
+  private void toSetupBanner() {
+    bannerPager = (InfiniteViewPager) findViewById(R.id.viewPager);
+    Decorator.setRatioByWidth(bannerPager, Utility.getScreenWidth(), 2.4f);
+    ArrayList<String> banner = new ArrayList<>();
+    for(int i = 0 ; i < 10 ; i ++) {
+      banner.add("Video: " + i);
+    }
+
+    bannerPager.setAdapter(new BannerAdapter(banner, false));
+    bannerPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+      @Override
+      public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+      }
+
+      @Override
+      public void onPageSelected(int position) {
+        Log.d("dogtim", "onPageSelected: " + position);
+        releasePlayer();
+        simpleExoPlayerView = (SimpleExoPlayerView) bannerPager.findViewWithTag(position);
+        simpleExoPlayerView.setControllerVisibilityListener(PlayerActivity.this);
+        simpleExoPlayerView.requestFocus();
+        initializePlayer();
+      }
+
+      @Override
+      public void onPageScrollStateChanged(int state) {
+
+      }
+    });
+
+    bannerPager.setCurrentItem(0, true);
+    setBannerPadding();
+  }
+
+  private void setBannerPadding() {
+    bannerPager.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+      @Override
+      public void onGlobalLayout() {
+        if (bannerPager.getAdapter() != null) {
+
+          int margin = Utility.getScreenWidth() / 20;
+          int padding = margin * 2;
+          bannerPager.setPadding(padding, 0, padding, 0);
+          bannerPager.setClipToPadding(false);
+          bannerPager.setPageMargin(margin);
+          if (Build.VERSION.SDK_INT >= 16) {
+            bannerPager.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+          } else {
+            bannerPager.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+          }
+        }
+      }
+    });
   }
 
   @Override
@@ -156,7 +223,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public void onStart() {
     super.onStart();
     if (Util.SDK_INT > 23) {
-      initializePlayer();
+      //initializePlayer();
     }
   }
 
@@ -164,7 +231,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public void onResume() {
     super.onResume();
     if ((Util.SDK_INT <= 23 || player == null)) {
-      initializePlayer();
+      //initializePlayer();
     }
   }
 

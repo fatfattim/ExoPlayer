@@ -41,6 +41,8 @@ android {
 
 dependencies {
     compile project(':library')
+    compile 'com.android.support:support-v4:25.1.0'
+    compile 'com.android.support:recyclerview-v7:25.1.0'
     withExtensionsCompile project(path: ':extension-ffmpeg')
     withExtensionsCompile project(path: ':extension-flac')
     withExtensionsCompile project(path: ':extension-opus')
